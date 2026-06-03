@@ -1,3 +1,4 @@
+//rename the folder to start with lowercase
 'use client'
 
 import { ImageType } from "../types"
@@ -20,7 +21,10 @@ const Display: React.FC<DisplayProps> = (image) => {
             display: 'flex',
             maxWidth: '400px'
         }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/*1.Suppressing the ESLint rule to use a raw <img> instead of Next.js <Image> loses automatic image optimization (lazy loading, responsive size). 
+            The right fix is to use <Image> with a configured remotePatterns domain in next.config.js:
+            2. without width on img, the browser can't reserve layout space. Either set explicit dimensions or use aspect-ratio in CSS.
+             eslint-disable-next-line @next/next/no-img-element */}
             <img src={`https://www.artic.edu/iiif/2/${image_id}/full/843,/0/default.jpg`} alt={title} height="100" />
             <div style={{ marginLeft: '1em' }}>
                 <h2 style={{ marginBottom: '0.5em' }}>{title}</h2>
@@ -35,23 +39,18 @@ type ResultsProps = {
     data: ImageType[]
 }
 
-const filterOutNudity = (data: ImageType[]) => {
-    const filteredData: ImageType[] = []
+// Relying on a regex over the title is brittle and easy to circumvent.
+// Using Array.filter instead of a for loop with a manual push 
 
-    for(let i = 0; i < data.length; i++) {
-        if(!data[i].title.match(/nud(e|ity)/i)) {
-            filteredData.push(data[i])
-        }
-    }
+const filterOutNudity = (data: ImageType[]) =>
+    data.filter(item => !/nud(e|ity)/i.test(item.title))
 
-    return filteredData
-}
-
-
+// JSX.Element is the older return type. Prefer React.ReactElement or just omit the explicit return annotation
 const Results = ({ isLoading, data }: ResultsProps): JSX.Element => {
     if(isLoading) return <></>
     let sanitizedData = filterOutNudity(
-        data.sort((a: ImageType, b: ImageType) => b._score - a._score)
+        //mutating sorted data in render
+        [...data].sort((a: ImageType, b: ImageType) => b._score - a._score)
     )
     return (
         <div style={{ display: 'flex', flexWrap: 'wrap' }}>

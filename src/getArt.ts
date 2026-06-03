@@ -6,10 +6,14 @@ const fields = [
     'image_id',
     'title',
     'artist_display'
-]
+].join(',')
 
 export const artFetcher = async (search: string = '') => {
-    return fetch(`https://api.artic.edu/api/v1/artworks/search?q=${search}&fields=${fields.join(',')}`)
-        .then(r => r.json())
-        .then(({ data }: Response) => data as ImageType[])
+    const params = new URLSearchParams({ q: search, fields })
+    const url = `https://api.artic.edu/api/v1/artworks/search?${params}`
+
+    const r = await fetch(url)
+    if (!r.ok) throw new Error(`API error ${r.status}`)
+    const json = await r.json()
+    return json.data as ImageType[]
 }

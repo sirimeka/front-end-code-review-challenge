@@ -6,6 +6,10 @@ import { ImageType } from "../types"
 import Results from "../Components/Results"
 import { artFetcher } from "../getArt"
 
+// Two pieces of state track the input when one would do. The submit action (Enter/button) could just read the current searchInputValue via a ref, 
+// or the effect could key off a stable trigger. This pattern is confusing to maintain:
+
+
 const Search = () => {
     const [error, setError] = useState(false)
     const [search, setSearch] = useState('')
@@ -14,14 +18,21 @@ const Search = () => {
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        // set the state as loading
+
+        //If the user types quickly and triggers multiple fetches, responses can arrive out of order and display stale results
+        //using ignore flag to avoid race condition
+        let ignore = false 
+
+        setError(false) // reset before each fetch
         setIsLoading(true)
 
         // fetch the art
         artFetcher(search)
             .then(data => {
-                setIsLoading(false)
-                setData(data)
+                if (!ignore) {
+                    setIsLoading(false)
+                    setData(data)
+                }
             })
             .catch((e) => {
                 setIsLoading(false)
@@ -39,7 +50,9 @@ const Search = () => {
                 />
                 <button onClick={() => setSearch(searchInputValue)}>Search</button>
             </div>
+            {/*Using a paragraph of non-breaking space for visual spacing is a layout hack. Use CSS gap, margin, or padding instead.*/} 
             <p>&nbsp;</p>
+
             {error && 'There was an error fetching the art.'}
             {isLoading 
                 ? 'Loading ...'
